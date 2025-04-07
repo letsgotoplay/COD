@@ -1,0 +1,784 @@
+### 1. 创建流程定义
+
+#### 请求
+
+```http
+POST /api/v1/process-definitions
+Content-Type: application/json
+
+{
+  "processCode": "CREDIT_OFFICER_PROMOTION",
+  "processName": "信贷员晋升流程",
+  "processTypeCode": "PROMOTION",
+  "description": "信贷员职级晋升审批流程",
+  "formConfig": "{\"fields\":[{\"name\":\"currentPosition\",\"label\":\"当前职位\",\"type\":\"text\",\"required\":true},{\"name\":\"targetPosition\",\"label\":\"目标职位\",\"type\":\"text\",\"required\":true},{\"name\":\"promotionReason\",\"label\":\"晋升理由\",\"type\":\"textarea\",\"required\":true},{\"name\":\"performanceScore\",\"label\":\"绩效评分\",\"type\":\"number\",\"required\":true},{\"name\":\"serviceYears\",\"label\":\"服务年限\",\"type\":\"number\",\"required\":true},{\"name\":\"promotionLevel\",\"label\":\"晋升级别\",\"type\":\"select\",\"options\":[\"初级晋升\",\"中级晋升\",\"高级晋升\"],\"required\":true}]}",
+  "timeoutDays": 5,
+  "nodes": [
+    {
+      "nodeName": "部门初审",
+      "nodeType": "NORMAL",
+      "approverType": "HIERARCHY",
+      "approvalStrategy": "ALL",
+      "timeoutHours": 24,
+      "sequenceNo": 1,
+      "approvers": [
+        {
+          "approverType": "EXPRESSION",
+          "expression": "${申请人.直接主管}",
+          "description": "申请人的直接主管"
+        }
+      ]
+    },
+    {
+      "nodeName": "并行评审",
+      "nodeType": "PARALLEL",
+      "approverType": "ROLE",
+      "approvalStrategy": "ALL",
+      "timeoutHours": 48,
+      "sequenceNo": 2,
+      "approvers": [
+        {
+          "approverType": "ROLE",
+          "approverId": "BUSINESS_MANAGER",
+          "description": "业务部门经理"
+        },
+        {
+          "approverType": "ROLE",
+          "approverId": "RISK_MANAGER",
+          "description": "风控部门经理"
+        }
+      ]
+    },
+    {
+      "nodeName": "晋升级别判断",
+      "nodeType": "CONDITIONAL",
+      "approverType": "SYSTEM",
+      "approvalStrategy": "ALL",
+      "sequenceNo": 3,
+      "conditionExpression": "${formData.promotionLevel == '高级晋升'}",
+      "approvers": []
+    },
+    {
+      "nodeName": "高级总监审批",
+      "nodeType": "NORMAL",
+      "approverType": "ROLE",
+      "approvalStrategy": "ANY",
+      "timeoutHours": 72,
+      "sequenceNo": 4,
+      "conditionExpression": "${formData.promotionLevel == '高级晋升'}",
+      "approvers": [
+        {
+          "approverType": "ROLE",
+          "approverId": "SENIOR_DIRECTOR",
+          "description": "高级总监"
+        }
+      ]
+    },
+    {
+      "nodeName": "人力资源确认",
+      "nodeType": "NORMAL",
+      "approverType": "ROLE",
+      "approvalStrategy": "ALL",
+      "timeoutHours": 24,
+      "sequenceNo": 5,
+      "approvers": [
+        {
+          "approverType": "ROLE",
+          "approverId": "HR_MANAGER",
+          "description": "人力资源经理"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processCode": "CREDIT_OFFICER_PROMOTION",
+  "processName": "信贷员晋升流程",
+  "processTypeCode": "PROMOTION",
+  "description": "信贷员职级晋升审批流程",
+  "formConfig": "{\"fields\":[{\"name\":\"currentPosition\",\"label\":\"当前职位\",\"type\":\"text\",\"required\":true},{\"name\":\"targetPosition\",\"label\":\"目标职位\",\"type\":\"text\",\"required\":true},{\"name\":\"promotionReason\",\"label\":\"晋升理由\",\"type\":\"textarea\",\"required\":true},{\"name\":\"performanceScore\",\"label\":\"绩效评分\",\"type\":\"number\",\"required\":true},{\"name\":\"serviceYears\",\"label\":\"服务年限\",\"type\":\"number\",\"required\":true},{\"name\":\"promotionLevel\",\"label\":\"晋升级别\",\"type\":\"select\",\"options\":[\"初级晋升\",\"中级晋升\",\"高级晋升\"],\"required\":true}]}",
+  "timeoutDays": 5,
+  "status": "ACTIVE",
+  "nodes": [
+    {
+      "id": 1,
+      "nodeName": "部门初审",
+      "nodeType": "NORMAL",
+      "approverType": "HIERARCHY",
+      "approvalStrategy": "ALL",
+      "timeoutHours": 24,
+      "sequenceNo": 1,
+      "approvers": [
+        {
+          "id": 1,
+          "approverType": "EXPRESSION",
+          "expression": "${申请人.直接主管}",
+          "description": "申请人的直接主管"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "nodeName": "并行评审",
+      "nodeType": "PARALLEL",
+      "approverType": "ROLE",
+      "approvalStrategy": "ALL",
+      "timeoutHours": 48,
+      "sequenceNo": 2,
+      "approvers": [
+        {
+          "id": 2,
+          "approverType": "ROLE",
+          "approverId": "BUSINESS_MANAGER",
+          "description": "业务部门经理"
+        },
+        {
+          "id": 3,
+          "approverType": "ROLE",
+          "approverId": "RISK_MANAGER",
+          "description": "风控部门经理"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "nodeName": "晋升级别判断",
+      "nodeType": "CONDITIONAL",
+      "approverType": "SYSTEM",
+      "approvalStrategy": "ALL",
+      "sequenceNo": 3,
+      "conditionExpression": "${formData.promotionLevel == '高级晋升'}",
+      "approvers": []
+    },
+    {
+      "id": 4,
+      "nodeName": "高级总监审批",
+      "nodeType": "NORMAL",
+      "approverType": "ROLE",
+      "approvalStrategy": "ANY",
+      "timeoutHours": 72,
+      "sequenceNo": 4,
+      "conditionExpression": "${formData.promotionLevel == '高级晋升'}",
+      "approvers": [
+        {
+          "id": 4,
+          "approverType": "ROLE",
+          "approverId": "SENIOR_DIRECTOR",
+          "description": "高级总监"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "nodeName": "人力资源确认",
+      "nodeType": "NORMAL",
+      "approverType": "ROLE",
+      "approvalStrategy": "ALL",
+      "timeoutHours": 24,
+      "sequenceNo": 5,
+      "approvers": [
+        {
+          "id": 5,
+          "approverType": "ROLE",
+          "approverId": "HR_MANAGER",
+          "description": "人力资源经理"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 2. 创建流程实例（草稿）
+
+#### 请求
+
+```http
+POST /api/v1/processes/apply
+Content-Type: application/json
+
+{
+  "processDefinitionId": 1,
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL",
+  "preSelectedApprovers": [
+    {
+      "nodeDefinitionId": 2,
+      "approverId": 789,
+      "approverName": "李四"
+    }
+  ]
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "DRAFT",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL"
+}
+```
+
+### 3. 提交流程
+
+#### 请求
+
+```http
+POST /api/v1/processes/1/submit
+Content-Type: application/json
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL",
+  "currentNode": {
+    "nodeInstanceId": 1,
+    "nodeName": "部门初审",
+    "nodeType": "NORMAL",
+    "status": "IN_PROGRESS",
+    "approvers": [
+      {
+        "approverInstanceId": 1,
+        "approverId": 5,
+        "approverName": "直接上级",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-07T10:20:35"
+      }
+    ]
+  }
+}
+```
+
+### 4. 部门初审审批通过
+
+#### 请求
+
+```http
+POST /api/v1/processes/approve
+Content-Type: application/json
+
+{
+  "processInstanceId": 1,
+  "nodeInstanceId": 1,
+  "approverInstanceId": 1,
+  "actionType": "APPROVE",
+  "actionComment": "员工表现优秀，业绩突出，同意晋升。"
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL",
+  "currentNode": {
+    "nodeInstanceId": 2,
+    "nodeName": "并行评审",
+    "nodeType": "PARALLEL",
+    "status": "IN_PROGRESS",
+    "approvers": [
+      {
+        "approverInstanceId": 2,
+        "approverId": 789,
+        "approverName": "李四",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-08T10:25:40"
+      },
+      {
+        "approverInstanceId": 3,
+        "approverId": 4,
+        "approverName": "部门用户2",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-08T10:25:40"
+      }
+    ]
+  }
+}
+```
+
+### 5. 业务部门经理审批通过
+
+#### 请求
+
+```http
+POST /api/v1/processes/approve
+Content-Type: application/json
+
+{
+  "processInstanceId": 1,
+  "nodeInstanceId": 2,
+  "approverInstanceId": 2,
+  "actionType": "APPROVE",
+  "actionComment": "从业务角度看，该员工业绩优秀，客户满意度高，同意晋升。"
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL",
+  "currentNode": {
+    "nodeInstanceId": 2,
+    "nodeName": "并行评审",
+    "nodeType": "PARALLEL",
+    "status": "IN_PROGRESS",
+    "approvers": [
+      {
+        "approverInstanceId": 3,
+        "approverId": 4,
+        "approverName": "部门用户2",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-08T10:25:40"
+      }
+    ]
+  }
+}
+```
+
+### 6. 风控部门经理审批通过
+
+#### 请求
+
+```http
+POST /api/v1/processes/approve
+Content-Type: application/json
+
+{
+  "processInstanceId": 1,
+  "nodeInstanceId": 2,
+  "approverInstanceId": 3,
+  "actionType": "APPROVE",
+  "actionComment": "从风控角度评估，该员工严格遵守贷款审批流程，风险意识强，同意晋升。"
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL",
+  "currentNode": {
+    "nodeInstanceId": 3,
+    "nodeName": "晋升级别判断",
+    "nodeType": "CONDITIONAL",
+    "status": "IN_PROGRESS",
+    "approvers": []
+  }
+}
+```
+
+由于是条件节点且晋升级别为"中级晋升"，系统会自动执行条件判断并进入下一节点，跳过"高级总监审批"节点直接进入"人力资源确认"节点。响应将立即更新为：
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL",
+  "currentNode": {
+    "nodeInstanceId": 4,
+    "nodeName": "人力资源确认",
+    "nodeType": "NORMAL",
+    "status": "IN_PROGRESS",
+    "approvers": [
+      {
+        "approverInstanceId": 4,
+        "approverId": 7,
+        "approverName": "其他审批人",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-07T10:35:50"
+      }
+    ]
+  }
+}
+```
+
+### 7. 人力资源确认
+
+#### 请求
+
+```http
+POST /api/v1/processes/approve
+Content-Type: application/json
+
+{
+  "processInstanceId": 1,
+  "nodeInstanceId": 4,
+  "approverInstanceId": 4,
+  "actionType": "APPROVE",
+  "actionComment": "已确认员工档案和晋升资格，薪资待遇将按新职级调整，自生效日期起执行。"
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 1,
+  "processNo": "PR2025040600001",
+  "processName": "信贷员晋升流程",
+  "officerId": 123,
+  "employeeId": 456,
+  "employeeName": "张三",
+  "formData": "{\"currentPosition\":\"信贷专员二级\",\"targetPosition\":\"信贷专员一级\",\"promotionReason\":\"张三在过去一年表现出色，完成了150%的业绩目标，并帮助团队开发了新的客户评估体系，提高了贷款审批效率20%。\",\"performanceScore\":92,\"serviceYears\":3,\"promotionLevel\":\"中级晋升\"}",
+  "status": "APPROVED",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T10:15:30",
+  "completeTime": "2025-04-06T11:30:25",
+  "effectiveDate": "2025-05-01",
+  "priority": "NORMAL"
+}
+```
+
+### 8. 查看流程审批记录
+
+#### 请求
+
+```http
+GET /api/v1/processes/1/approval-records
+```
+
+#### 响应
+
+```json
+[
+  {
+    "id": 4,
+    "processInstanceId": 1,
+    "nodeName": "人力资源确认",
+    "approverId": 7,
+    "approverName": "其他审批人",
+    "actionType": "APPROVE",
+    "actionComment": "已确认员工档案和晋升资格，薪资待遇将按新职级调整，自生效日期起执行。",
+    "actionTime": "2025-04-06T11:30:25"
+  },
+  {
+    "id": 3,
+    "processInstanceId": 1,
+    "nodeName": "并行评审",
+    "approverId": 4,
+    "approverName": "部门用户2",
+    "actionType": "APPROVE",
+    "actionComment": "从风控角度评估，该员工严格遵守贷款审批流程，风险意识强，同意晋升。",
+    "actionTime": "2025-04-06T11:20:15"
+  },
+  {
+    "id": 2,
+    "processInstanceId": 1,
+    "nodeName": "并行评审",
+    "approverId": 789,
+    "approverName": "李四",
+    "actionType": "APPROVE",
+    "actionComment": "从业务角度看，该员工业绩优秀，客户满意度高，同意晋升。",
+    "actionTime": "2025-04-06T11:10:05"
+  },
+  {
+    "id": 1,
+    "processInstanceId": 1,
+    "nodeName": "部门初审",
+    "approverId": 5,
+    "approverName": "直接上级",
+    "actionType": "APPROVE",
+    "actionComment": "员工表现优秀，业绩突出，同意晋升。",
+    "actionTime": "2025-04-06T10:40:45"
+  }
+]
+```
+
+## 示例：高级晋升流程
+
+下面我们以一个高级晋升流程为例，展示条件分支和总监审批节点：
+
+### 1. 创建高级晋升流程实例
+
+#### 请求
+
+```http
+POST /api/v1/processes/apply
+Content-Type: application/json
+
+{
+  "processDefinitionId": 1,
+  "officerId": 124,
+  "employeeId": 457,
+  "employeeName": "李四",
+  "formData": "{\"currentPosition\":\"信贷专员一级\",\"targetPosition\":\"信贷主管\",\"promotionReason\":\"李四在过去两年负责的团队业绩增长40%，客户违约率降低30%，表现出色的管理能力和业务判断力。\",\"performanceScore\":95,\"serviceYears\":5,\"promotionLevel\":\"高级晋升\"}",
+  "effectiveDate": "2025-05-15",
+  "priority": "HIGH",
+  "preSelectedApprovers": [
+    {
+      "nodeDefinitionId": 4,
+      "approverId": 888,
+      "approverName": "王总监"
+    }
+  ]
+}
+```
+
+### 2. 提交流程后，部门初审、并行评审通过后，流程将进入条件节点
+
+由于表单中promotionLevel为"高级晋升"，条件判断后将进入总监审批节点：
+
+```json
+{
+  "id": 2,
+  "processNo": "PR2025040600002",
+  "processName": "信贷员晋升流程",
+  "officerId": 124,
+  "employeeId": 457,
+  "employeeName": "李四",
+  "formData": "{\"currentPosition\":\"信贷专员一级\",\"targetPosition\":\"信贷主管\",\"promotionReason\":\"李四在过去两年负责的团队业绩增长40%，客户违约率降低30%，表现出色的管理能力和业务判断力。\",\"performanceScore\":95,\"serviceYears\":5,\"promotionLevel\":\"高级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T14:15:30",
+  "effectiveDate": "2025-05-15",
+  "priority": "HIGH",
+  "currentNode": {
+    "nodeInstanceId": 8,
+    "nodeName": "高级总监审批",
+    "nodeType": "NORMAL",
+    "status": "IN_PROGRESS",
+    "approvers": [
+      {
+        "approverInstanceId": 8,
+        "approverId": 888,
+        "approverName": "王总监",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-09T14:45:50"
+      }
+    ]
+  }
+}
+```
+
+### 3. 总监审批（转交示例）
+
+总监可能需要转交任务给另一个总监：
+
+#### 请求
+
+```http
+POST /api/v1/processes/transfer
+Content-Type: application/json
+
+{
+  "processInstanceId": 2,
+  "nodeInstanceId": 8,
+  "approverInstanceId": 8,
+  "actionType": "TRANSFER",
+  "actionComment": "我近期出差，请赵总监协助处理。",
+  "targetApproverId": 999,
+  "targetApproverName": "赵总监"
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 2,
+  "processNo": "PR2025040600002",
+  "processName": "信贷员晋升流程",
+  "officerId": 124,
+  "employeeId": 457,
+  "employeeName": "李四",
+  "formData": "{\"currentPosition\":\"信贷专员一级\",\"targetPosition\":\"信贷主管\",\"promotionReason\":\"李四在过去两年负责的团队业绩增长40%，客户违约率降低30%，表现出色的管理能力和业务判断力。\",\"performanceScore\":95,\"serviceYears\":5,\"promotionLevel\":\"高级晋升\"}",
+  "status": "IN_PROGRESS",
+  "reworkCount": 0,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T14:15:30",
+  "effectiveDate": "2025-05-15",
+  "priority": "HIGH",
+  "currentNode": {
+    "nodeInstanceId": 8,
+    "nodeName": "高级总监审批",
+    "nodeType": "NORMAL",
+    "status": "IN_PROGRESS",
+    "approvers": [
+      {
+        "approverInstanceId": 9,
+        "approverId": 999,
+        "approverName": "赵总监",
+        "approvalStatus": "PENDING",
+        "dueTime": "2025-04-09T14:45:50"
+      }
+    ]
+  }
+}
+```
+
+### 4. 总监审批通过
+
+#### 请求
+
+```http
+POST /api/v1/processes/approve
+Content-Type: application/json
+
+{
+  "processInstanceId": 2,
+  "nodeInstanceId": 8,
+  "approverInstanceId": 9,
+  "actionType": "APPROVE",
+  "actionComment": "经过评估，认为李四的能力和业绩符合信贷主管的要求，同意晋升。"
+}
+```
+
+之后流程会进入人力资源确认节点。
+
+## 示例：退回重做流程
+
+我们也可以展示一个需要退回重做的流程示例：
+
+### 1. 并行评审时风控部门退回重做
+
+#### 请求
+
+```http
+POST /api/v1/processes/rework
+Content-Type: application/json
+
+{
+  "processInstanceId": 3,
+  "nodeInstanceId": 12,
+  "approverInstanceId": 13,
+  "actionType": "REWORK",
+  "actionComment": "风控评估存在问题，近期该员工处理的两笔贷款出现逾期风险，请补充风险管控方面的说明后重新提交。"
+}
+```
+
+#### 响应
+
+```json
+{
+  "id": 3,
+  "processNo": "PR2025040600003",
+  "processName": "信贷员晋升流程",
+  "officerId": 125,
+  "employeeId": 458,
+  "employeeName": "王五",
+  "formData": "{\"currentPosition\":\"信贷专员三级\",\"targetPosition\":\"信贷专员二级\",\"promotionReason\":\"王五积极主动学习业务知识，在客户服务方面表现优秀。\",\"performanceScore\":85,\"serviceYears\":2,\"promotionLevel\":\"初级晋升\"}",
+  "status": "REWORK",
+  "reworkCount": 1,
+  "applyUserId": 1,
+  "applyUserName": "当前用户",
+  "applyTime": "2025-04-06T15:15:30",
+  "effectiveDate": "2025-06-01",
+  "priority": "NORMAL"
+}
+```
+
+### 2. 修改后重新提交
+
+#### 请求
+
+```http
+POST /api/v1/processes/apply
+Content-Type: application/json
+
+{
+  "processDefinitionId": 1,
+  "officerId": 125,
+  "employeeId": 458,
+  "employeeName": "王五",
+  "formData": "{\"currentPosition\":\"信贷专员三级\",\"targetPosition\":\"信贷专员二级\",\"promotionReason\":\"王五积极主动学习业务知识，在客户服务方面表现优秀。近期已对两笔存在风险的贷款进行了重新评估和处理，并制定了详细的风险管控计划。\",\"performanceScore\":85,\"serviceYears\":2,\"promotionLevel\":\"初级晋升\",\"riskControlMeasures\":\"1. 已对所有客户进行风险重评；2. 建立了每周风险检查机制；3. 主动完成了风控培训课程。\"}",
+  "effectiveDate": "2025-06-01",
+  "priority": "NORMAL"
+}
+```
+
+
+
